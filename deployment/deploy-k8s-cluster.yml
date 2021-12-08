@@ -193,8 +193,20 @@
   #   shell: "helm install nginx-ingress nginx-stable/nginx-ingress --namespace {{cluster_name}}-namespace --set controller.config.proxy-body-size=50m"
   #   when: cluster_state == "present"
 
-  - name: "Custom Install nginx config"
-    shell: "helm install --name nginx-ingress nginx-stable/nginx-ingress --namespace {{cluster_name}}-namespace --values ./nginx-ingress.values.yml"
+  # - name: "Custom Install nginx config"
+  #   shell: "helm install nginx-ingress nginx-stable/nginx-ingress --namespace {{cluster_name}}-namespace --values ./nginx-ingress.values.yml"
+  #   when: cluster_state == "present"
+
+  # - name: "Custom Install nginx config"
+  #   shell: helm install nginx-ingress nginx-stable/nginx-ingress --namespace {{cluster_name}}-namespace --set nginx.ingress.annotations[0].key="kubernets.io/proxy-body-size" --set nginx.ingress.annotations[0].value=50m
+  #   when: cluster_state == "present"
+
+  - name: "Install nginx-ingress"
+    community.kubernetes.helm:
+      name: nginx-ingress
+      namespace: "{{cluster_name}}-namespace"
+      chart_ref: nginx-stable/nginx-ingress
+      state: present
     when: cluster_state == "present"
 
   - name: Wait for Ingress Nginx to get ready
@@ -235,6 +247,7 @@
           annotations:
             kubernetes.io/ingress.class: "nginx"
             nginx.ingress.kubernetes.io/ssl-redirect: "false"
+            nginx.ingress.kubernetes.io/proxy-body-size: 50m
             nginx.org/rewrites: "serviceName=frontend rewrite=/;serviceName=api rewrite=/"
         spec:
           rules:
